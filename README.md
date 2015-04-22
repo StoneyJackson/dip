@@ -34,8 +34,8 @@ dip...
 ## Connecting with GitHub's Webhook
 
 To implement continuous deployment for a GitHub repository, simply set up a dip
-project for GitHub repository onto your deployment server, and then call
-`dip update` from a webhook listener. Below is a very simple example in PHP.
+project for GitHub repository onto your deployment server, and then call `dip
+update` from a webhook listener. Below is a very simple example in PHP.
 
 ***The example below is not secure. It is mearly an example. Use at your own
 risk.***
@@ -76,9 +76,9 @@ updates the application's database. Let's assume it's called `dbmigrate.bash`:
     cd "$branch"                # move into the branch subdirectory
     bin/migrate-database        # run database migrations
 
-We want this to run after a branch is first cloned and after it is updated.
-You can either copy dbmigrate.bash into each hook subdirectory, or you could
-symlink it (or any variation thereof). In this example, we'll store our hook in
+We want this to run after a branch is first cloned and after it is updated. You
+can either copy dbmigrate.bash into each hook subdirectory, or you could symlink
+it (or any variation thereof). In this example, we'll store our hook in
 .dip/hooks and symlink it into branch-clone-post and branch-update-post
 
     $ cd .dip/hooks
