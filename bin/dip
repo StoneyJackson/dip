@@ -28,7 +28,7 @@ init() {
     mkdir -p "$path/.dip"
     echo ...........cloning local
     git clone --bare "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
-    dip update "$path"
+    "$0" update "$path"
 }
 
 
