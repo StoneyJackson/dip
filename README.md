@@ -28,3 +28,14 @@ $ dip update
 $ dip init URL/project.git path/to/destination
 $ dip update path/to/destination
 ```
+
+## Hooks
+
+[[[In progress]]]
+
+post-clone      Ran after a branch has been cloned.
+post-delete     Ran after a branch has been deleted.
+post-update     Ran after a branch has been updated.
+pre-clone       Ran before a branch is cloned.
+pre-delete      Ran before a branch is deleted.
+pre-update      Ran before a branch is updated.
