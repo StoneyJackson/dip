@@ -9,11 +9,11 @@ dip clones each branch in a git repository into its own subdirectory.
 
 Initialize a dip project for a git repository.
 
-    $ dip init URL-TO-GIT-REPO mydipproj
+    $ dip init URL/to/my/project.git path/to/mydipproj
 
 Now everytime you run...
 
-    $ dip update mydipproject
+    $ dip update path/to/mydipproject
 
 dip...
 
