@@ -148,3 +148,10 @@ hooks will be ran nor will the operation.
 ### Q: Why dip and not dep (ala short for deployment)?
 
 We wanted to stick with git's insulting naming convention.
+
+## Credits
+
+Thanks to 
+
+* Using xPaw's [GitHub-WebHook](https://github.com/xPaw/GitHub-WebHook) via MIT
+  License (Expat)
