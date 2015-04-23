@@ -45,7 +45,13 @@ risk.***
 Add the URL as a webhook to your GitHub project and let the auto deployment
 begin.
 
-## `dip update`
+## `dip init URL/to/origin/git/repo [path/to/new/dip/project]`
+
+Creates a new dip project for the given git repository in the given directory.
+If a directory is not given, a new directory is created in the current directory
+with the same name as the repository.
+
+## `dip update [path/to/dip/project]`
 
 Updates the local repositories to reflect the branches in origin.
 
