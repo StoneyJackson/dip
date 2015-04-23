@@ -127,16 +127,16 @@ create_branch_files() {
 
 
 branches() {
-    git --git-dir="$path/.dip/local.git" branch | tr '*' ' ' | sed 's/ //g'
+    git --git-dir="$path/.dip/local.git" branch | tr '*' ' ' | sed 's/ //g' | sort
 }
 
 
 branch_repos() {
-    for i in "$path"/* ; do
+    (for i in "$path"/* ; do
         if [ -d "$i" ] ; then
             echo "$i" | sed 's|.*/||'
         fi
-    done
+    done) | sort
 }
 
 
