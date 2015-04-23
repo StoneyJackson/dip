@@ -3,17 +3,17 @@
 # License: GPLv3
 
 
-usage() {
+print_usage_message() {
     echo "usage:"
     echo "  $(basename "$0") init REPO [PATH]"
     echo "  $(basename "$0") update [PATH]"
 }
 
 
-init() {
+run_init_command() {
     url="$1"
     if [ -z "$url" ] ; then
-        usage
+        print_usage_message
         exit 1
     fi
     path="${2%/}"
@@ -22,7 +22,7 @@ init() {
     fi
     if [ -d "$path/.dip" ] ; then
         echo "Target is already a dip: $path"
-        usage
+        print_usage_message
         exit 1
     fi
 
@@ -58,7 +58,7 @@ EOF
 }
 
 
-update() {
+run_update_command() {
     path="${1%/}"
     if [ -z "$path" ] ; then
         path="$(pwd)"
@@ -66,24 +66,24 @@ update() {
     path="$(cd "$path" && pwd)"
     if [ ! -d "$path/.dip" ] ; then
         echo "Not in a dip."
-        usage
+        print_usage_message
         exit 1
     fi
     git --git-dir="$path/.dip/local.git" fetch
-    run-operations delete pull clone
+    for_each_branch_run_operations delete pull clone
 }
 
 
-run-operations() {
+for_each_branch_run_operations() {
     for operation in "$@"; do
         for branch in $(branches_to_$operation); do
-            run-hooks $operation "$branch"
+            run_hooks_for_operation_on_branch $operation "$branch"
         done
     done
 }
 
 
-run-hooks() {
+run_hooks_for_operation_on_branch() {
     operation="$1"
     branch="$2"
     for hook in "$path/.dip/hooks/$1/"* ; do
@@ -97,7 +97,6 @@ run-hooks() {
         fi
     done
 }
-
 
 
 branches_to_clone() {
@@ -148,10 +147,10 @@ command_exists() {
 
 cmd="$1"
 shift
-if command_exists "$cmd" ; then
-    "$cmd" "$@"
+if command_exists "run_${cmd}_command" ; then
+    "run_${cmd}_command" "$@"
 else
     echo "Unknown command $cmd"
-    usage
+    print_usage_message
     exit 1
 fi
