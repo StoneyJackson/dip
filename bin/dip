@@ -2,6 +2,7 @@
 # Copyright (c) 2015, Stoney Jackson <dr.stoney@gmail.com>
 # License: GPLv3
 
+
 usage() {
     echo "usage:"
     echo "  $(basename "$0") init REPO [PATH]"
@@ -25,13 +26,34 @@ init() {
         exit 1
     fi
 
-    mkdir -p "$path/.dip/hooks/branch-update-pre"
-    mkdir -p "$path/.dip/hooks/branch-update-post"
-    mkdir -p "$path/.dip/hooks/branch-delete-pre"
-    mkdir -p "$path/.dip/hooks/branch-delete-post"
-    mkdir -p "$path/.dip/hooks/branch-clone-pre"
-    mkdir -p "$path/.dip/hooks/branch-clone-post"
-    echo ...........cloning local
+
+    mkdir -p "$path/.dip/hooks/delete"
+    cat > "$path/.dip/hooks/delete/4_main.bash" <<"EOF"
+#!/bin/bash
+branch="$1"
+rm -r "$branch"
+EOF
+    chmod +x "$path/.dip/hooks/delete/4_main.bash"
+
+
+    mkdir -p "$path/.dip/hooks/pull"
+    cat > "$path/.dip/hooks/pull/4_main.bash" <<"EOF"
+#!/bin/bash
+branch="$1"
+git --git-dir="$branch/.git" pull
+EOF
+    chmod +x "$path/.dip/hooks/pull/4_main.bash"
+
+
+    mkdir -p "$path/.dip/hooks/clone"
+    cat > "$path/.dip/hooks/clone/4_main.bash" <<"EOF"
+#!/bin/bash
+branch="$1"
+git clone --branch "$branch" --single-branch ".dip/local.git" "$branch"
+EOF
+    chmod +x "$path/.dip/hooks/clone/4_main.bash"
+
+
     git clone --bare "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
 }
 
@@ -47,56 +69,35 @@ update() {
         usage
         exit 1
     fi
-    echo .........update local
     git --git-dir="$path/.dip/local.git" fetch
-    for branch in $(branches_to_delete); do
-        echo .........deleting $branch
-        with-hooks branch-delete "$branch"
-    done
-    for branch in $(branches_to_update); do
-        echo .........updating $branch
-        with-hooks branch-update "$branch"
-    done
-    for branch in $(branches_to_clone); do
-        echo .........cloning $branch
-        with-hooks branch-clone "$branch"
+    run-operations delete pull clone
+}
+
+
+run-operations() {
+    for operation in "$@"; do
+        for branch in $(branches_to_$operation); do
+            run-hooks $operation "$branch"
+        done
     done
 }
 
 
-with-hooks() {
+run-hooks() {
     operation="$1"
     branch="$2"
-    for hook in "$path/.dip/hooks/$1-pre/"* ; do
+    for hook in "$path/.dip/hooks/$1/"* ; do
         if [ -x "$hook" ] ; then
-            (cd "$path" && "$hook" "$branch") || return 1
+            (
+                cd "$path"
+                if [ -x "$hook" ] ; then
+                    "$hook" "$branch" || return 1
+                fi
+            )
         fi
     done
-    "$operation" "$branch" || return 1
-    for hook in "$path/.dip/hooks/$1-post/"* ; do
-        if [ -x "$hook" ] ; then
-            (cd "$path" && "$hook" "$branch") || return 1
-        fi
-    done
 }
 
-
-branch-delete() {
-    branch="$1"
-    rm -r "$path/$branch"
-}
-
-
-branch-update() {
-    branch="$1"
-    git --git-dir="$path/$branch/.git" pull
-}
-
-
-branch-clone() {
-    branch="$1"
-    git clone --branch "$branch" --single-branch "$path/.dip/local.git" "$path/$branch"
-}
 
 
 branches_to_clone() {
@@ -111,7 +112,7 @@ branches_to_delete() {
 }
 
 
-branches_to_update() {
+branches_to_pull() {
     create_branch_files
     comm -1 -2 "$path/.dip/branches" "$path/.dip/branch_repos"
 }

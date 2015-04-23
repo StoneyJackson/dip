@@ -45,71 +45,66 @@ risk.***
 Add the URL as a webhook to your GitHub project and let the auto deployment
 begin.
 
-## Customization with hooks
+## Customization: hooks
 
-A hook is an executable script that runs either before or after each major
-operation on a branch. Hooks are added by placing them in the directory
-corresponding to when it should be ran.
+You can extend dip's behavior with hooks. A hook is an executable script that is
+placed in one of the following directories:
 
-    .dip/hooks/branch-clone-post/   - After branch is cloned
-    .dip/hooks/branch-clone-pre/    - Before branch is cloned
-    .dip/hooks/branch-delete-post/  - After branch is deleted
-    .dip/hooks/branch-delete-pre/   - Before branch is deleted
-    .dip/hooks/branch-update-post/  - After branch is updated
-    .dip/hooks/branch-update-pre/   - Before branch is updated
+* .dip/hooks/clone/
+* .dip/hooks/delete/
+* .dip/hooks/pull/
 
+Each directory corresponds to one of the basic operations performed on branches
+when `dip update` is ran. `clone` is performed to clone out a branch for the
+first time. `delete` is performed when a branch no longer exists in origin.
+`pull` is performed to pull changes from origin.
+
+* Each hook in an operation directory is ran in lexicographical order to perform
+  the operation.
+* If any hook returns non-zero the operation is aborted for the current branch.
 * Before a hook is run, the current working directory is set to the root of the
   dip project.
-* The name of the target branch is passed as the first command-line argurment.
-* If a pre-hook exits with a non-zero value, all following hooks and the
-  operation itself is aborted.
-* More than one hook may be installed for each event. Hooks are executed in the
-  order they are globbed.
+* The name of the target branch is passed as the first command-line argument.
+* The default behavior for each operation is in a script `4_main.bash`. This
+  makes it convenient to alter its behavior directly, or to install "pre" and
+  "post" scripts.
 
-## Example hook - database migration
+### Example hook - database migration
 
 This hook runs the application's bin/migrate-database command that presumably
-updates the application's database. Let's assume it's called `dbmigrate.bash`:
+updates the application's database.
 
     #!/bin/bash
+    # FILE: dbmigrate.bash
     branch="$1"                 # retrieve the branch name from the command-line
     cd "$branch"                # move into the branch subdirectory
     bin/migrate-database        # run database migrations
+    exit $?                     # return the exit code of bin/migrate-database
 
-We want this to run after a branch is first cloned and after it is updated. You
-can either copy dbmigrate.bash into each hook subdirectory, or you could symlink
-it (or any variation thereof). In this example, we'll store our hook in
-.dip/hooks and symlink it into branch-clone-post and branch-update-post
+We want this to run after a branch is first cloned and after it is updated.
 
-    $ cd .dip/hooks
-    $ cp path/to/dbmigrate.bash .
     $ chmod +x dbmigrate.bash
-    $ cd branch-clone-post
-    $ ln -s ../dbmigrate.bash .
-    $ cd ../branch-update-post
-    $ ln -s ../dbmigrate.bash .
+    $ cp dbmigrate.bash .dip/hooks/clone/9_dbmigrate.bash
+    $ cp dbmigrate.bash .dip/hooks/pull/9_dbmigrate.bash
 
-## Example hook - filter non-deployment branches
+### Example hook - filter non-deployment branches
 
 This hook demonstrates how you might exclude some branches from being cloned
 (deployed). Here we assume that all branches that are prefixed with `wip-` are a
-work in progress and should not be deployed. We'll assume this script is called
-filter-wip.bash
+work in progress and should not be deployed.
 
     #!/bin/bash
+    # FILE: filterwip.bash
     branch="$1"
     if [ "$branch" = "wip-*" ] ; then
-        exit 1                      # Exit non-zero to stop further processing
+        exit 1                      # abort operation
     fi
-    exit 0                          # Exit zero continues processing
+    exit 0                          # continue operation
 
 Let's link it in.
 
-    $ cd .dip/hooks
-    $ cp path/to/filter-wip.bash .
-    $ chmod +x filter-wip.bash
-    $ cd branch-clone-pre
-    $ ln -s ../filter-wip.bash  0-filter-wip.bash
+    $ chmod +x filterwip.bash
+    $ mv filterwip.bash .dip/hooks/clone/0_filterwip.bash
 
 We prefixed the hook with `0-` to help ensure it would run before any other
 hooks in branch-clone-pre. That way if our filter returns non-zero, no other
