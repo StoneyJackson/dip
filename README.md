@@ -45,19 +45,32 @@ risk.***
 Add the URL as a webhook to your GitHub project and let the auto deployment
 begin.
 
-## Customization: hooks
+## `dip update`
 
-You can extend dip's behavior with hooks. A hook is an executable script that is
-placed in one of the following directories:
+Updates the local repositories to reflect the branches in origin.
+
+When you run `dip update`, three operations are performed:
+
+1. delete - Deletes each local branch that no longer exists in origin.
+2. pull - Pull changes from origin into each local branch.
+3. clone - Clone each branch in origin that is not represented locally.
+
+Each operation has a corresponding subdirectory in .dip/hooks:
 
 * .dip/hooks/clone/
 * .dip/hooks/delete/
 * .dip/hooks/pull/
 
-Each directory corresponds to one of the basic operations performed on branches
-when `dip update` is ran. `clone` is performed to clone out a branch for the
-first time. `delete` is performed when a branch no longer exists in origin.
-`pull` is performed to pull changes from origin.
+All the executable scripts (called hooks) in an operation's directory is ran for
+each branch that needs that operation performed. They are ran in lexicographical
+order.  By default, there is only one such script, `4_main.bash`. This script is
+the one that actually performs the operation.
+
+This framework makes it easy to customize each operation. To update an
+operation, simply add an executable script to that operation's hooks directory.
+The order that your hook will be executed is determined by its name.
+
+Here are some other important facts about hooks:
 
 * Each hook in an operation directory is ran in lexicographical order to perform
   the operation.
