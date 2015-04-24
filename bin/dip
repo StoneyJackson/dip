@@ -3,6 +3,19 @@
 # License: GPLv3
 
 
+main() {
+    cmd="$1"
+    shift
+    if command_exists "run_${cmd}_command" ; then
+        "run_${cmd}_command" "$@"
+    else
+        echo "Unknown command $cmd"
+        print_usage_message
+        exit 1
+    fi
+}
+
+
 print_usage_message() {
     echo "usage:"
     echo "  $(basename "$0") init REPO [PATH]"
@@ -145,12 +158,4 @@ command_exists() {
 }
 
 
-cmd="$1"
-shift
-if command_exists "run_${cmd}_command" ; then
-    "run_${cmd}_command" "$@"
-else
-    echo "Unknown command $cmd"
-    print_usage_message
-    exit 1
-fi
+main "$@"
