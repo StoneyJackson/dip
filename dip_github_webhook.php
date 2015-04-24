@@ -1,14 +1,39 @@
 <?php
-error_reporting(E_ALL);
+/*
+ * Edit the values below to configure your webhook.
+ */
+class Dip_GitHub_WebHook_Settings {
+
+    /*
+     * Secret key given to GitHub when defining the webhook.
+     */
+    public $SecretKey = '';
+
+    /*
+     * Prepended to $PATH before running dip in the shell.
+     * Example: '/home/me/bin'
+     */
+    public $PathsToPrepend = array(
+    );
+
+    /*
+     * Path to dip project.
+     */
+    public $PathToDipProject = '/path/to/project';
+}
 
 
 class Dip_GitHub_WebHook {
-    private $GitHub_WebHook_SecretKey = '';
-    private $PathToDipCommand = '/path/to/dip';
-    private $PathToDipProject = '/path/to/project';
+
+    private $SecretKey;
+    private $PathsToPrepend;
+    private $PathToDipProject;
     private $WebHook;
 
-    public function __construct() {
+    public function __construct($settings) {
+        $this->SecretKey = $settings->SecretKey;
+        $this->PathsToPrepend = $settings->PathsToPrepend;
+        $this->PathToDipProject = $settings->PathToDipProject;
         $this->WebHook = new GitHub_WebHook();
     }
 
@@ -42,7 +67,7 @@ class Dip_GitHub_WebHook {
             throw new Exception(
                 'Invalid IP Address: request not sent from GitHub.');
         }
-        if (!$this->WebHook->ValidateHubSignature($this->GitHub_WebHook_SecretKey)) {
+        if (!$this->WebHook->ValidateHubSignature($this->SecretKey)) {
             throw new Exception(
                 'Invalid Hub Signature: request not sent from GitHub or keys do not match.');
         }
@@ -70,9 +95,20 @@ class Dip_GitHub_WebHook {
     }
 
     private function RunDip() {
-        exec($this->PathToDipCommand.' update '.$this->PathToDipProject.' 2>&1', $out, $return);
+        $this->PrependPathsToEnvironmentsPath();
+        exec('dip update '.$this->PathToDipProject.' 2>&1', $out, $return);
         if ($return !== 0) {
             error_log(implode("\n", $out));
+        }
+    }
+
+    private function PrependPathsToEnvironmentsPath() {
+        if ($this->PathsToPrepend) {
+            $path = implode(':', $this->PathsToPrepend);
+            if ($_ENV['PATH']) {
+                $path .= ':'.$_ENV['PATH'];
+            }
+            putenv("PATH=$path");
         }
     }
 }
@@ -267,5 +303,5 @@ class GitHub_WebHook
 /* End of GitHub_WebHook */
 
 
-$webhook = new Dip_GitHub_WebHook();
+$webhook = new Dip_GitHub_WebHook(new Dip_GitHub_WebHook_Settings());
 $webhook->ProcessRequest();
