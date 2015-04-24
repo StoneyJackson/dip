@@ -174,7 +174,7 @@ class GitHub_WebHook
             throw new Exception( 'Missing content type.' );
         }
         
-        $this->EventType = filter_input( INPUT_SERVER, $this->GetEventHeaderName(), FILTER_SANITIZE_STRING );
+        $this->EventType = filter_var( $_SERVER[$this->GetEventHeaderName()], FILTER_SANITIZE_STRING);
         
         $ContentType = $_SERVER[ 'CONTENT_TYPE' ];
         
