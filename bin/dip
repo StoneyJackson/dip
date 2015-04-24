@@ -39,34 +39,9 @@ run_init_command() {
         exit 1
     fi
 
-
-    mkdir -p "$path/.dip/hooks/delete"
-    cat > "$path/.dip/hooks/delete/4_main.bash" <<"EOF"
-#!/bin/bash
-branch="$1"
-rm -r "$branch"
-EOF
-    chmod +x "$path/.dip/hooks/delete/4_main.bash"
-
-
-    mkdir -p "$path/.dip/hooks/pull"
-    cat > "$path/.dip/hooks/pull/4_main.bash" <<"EOF"
-#!/bin/bash
-branch="$1"
-git --git-dir="$branch/.git" pull
-EOF
-    chmod +x "$path/.dip/hooks/pull/4_main.bash"
-
-
-    mkdir -p "$path/.dip/hooks/clone"
-    cat > "$path/.dip/hooks/clone/4_main.bash" <<"EOF"
-#!/bin/bash
-branch="$1"
-git clone --branch "$branch" --single-branch ".dip/local.git" "$branch"
-EOF
-    chmod +x "$path/.dip/hooks/clone/4_main.bash"
-
-
+    script_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+    skel="$script_dir/../skeleton"
+    cp -R "$skel" "$path"
     git clone --bare "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
 }
 
@@ -114,27 +89,27 @@ run_hooks_for_operation_on_branch() {
 
 branches_to_clone() {
     create_branch_files
-    comm -2 -3 "$path/.dip/branches" "$path/.dip/branch_repos"
+    comm -2 -3 "$path/.dip/tmp/branches" "$path/.dip/tmp/branch_repos"
 }
 
 
 branches_to_delete() {
     create_branch_files
-    comm -1 -3 "$path/.dip/branches" "$path/.dip/branch_repos"
+    comm -1 -3 "$path/.dip/tmp/branches" "$path/.dip/tmp/branch_repos"
 }
 
 
 branches_to_pull() {
     create_branch_files
-    comm -1 -2 "$path/.dip/branches" "$path/.dip/branch_repos"
+    comm -1 -2 "$path/.dip/tmp/branches" "$path/.dip/tmp/branch_repos"
 }
 
 
 create_branch_files() {
     if [ -z "$BRANCH_FILES_CREATED" ] ; then
         BRANCH_FILES_CREATED="true"
-        branches > "$path/.dip/branches"
-        branch_repos > "$path/.dip/branch_repos"
+        branches > "$path/.dip/tmp/branches"
+        branch_repos > "$path/.dip/tmp/branch_repos"
     fi
 }
 

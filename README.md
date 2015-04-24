@@ -9,13 +9,8 @@ Continuous deployment of all branches of a GitHub hosted repository.
 
 ## Requirements
 
-For the `dip` command:
-
 * Bash
-* Git
-
-For the `dip_github_webhook.php` PHP webhook:
-
+* Git 1.10+
 * GitHub
 * PHP
 
@@ -24,55 +19,39 @@ For the `dip_github_webhook.php` PHP webhook:
 Clone this repository and add its `bin` directory to your path. Alternatively,
 always supply a relative or absolute path when calling `dip`.
 
-## Using `dip`
+## Setup a dip project
 
-    $ dip init URL/to/my/project.git path/to/mydipproj
-    $ dip update path/to/mydipproj
+From the terminal on your webserver, create a dip project under sumwhere under
+your webserver's document root.
 
-The first line creates a dip project. The second line updates your dip project
-with origin; run as often as you like.
+    $ dip init https://github.com/your/project.git path/to/project
+    $ cd path/to/project
+    $ vim webhook.php       # adjust settings
 
-`dip update` does three things:
+On GitHub, add a webhook to your GitHub repository.
 
-1. It **clones** each branch in origin into a separate subdirectory of yor dip
+1. Go to Settings -> WebHooks & Services -> Add webhook
+2. In "Payload URL" enter URL to webhook.php.
+3. For "Secret" enter the secret you set in webhook.php.
+4. Select "Let me select individual events" and select *push*, *create*, and
+   *delete*.
+
+After you add the webhook, GitHub will ping webhook.php on your server. If all
+goes well, all of your branches will be cloned into subdirectories of your dip
+project. If something goes wrong, check your webserver's error logs for problems
+(or wherever PHP errors are logged; check phpinfo() and php.ini).
+
+## Customization
+
+When webhook.php receives a request, it calls `dip update` on your project.
+This does three things:
+
+1. **Clones** each branch in origin into a separate subdirectory of yor dip
    project.
-2. It **pulls** all changes from each branch in origin to each of your local
+2. **Pulls** all changes from each branch in origin to each of your local
    branches.
-3. It **deletes** all branches in your dip project that do not appear in
+3. **Deletes** all branches in your dip project that do not appear in
    origin.
-
-The behavior of each operation can be controlled through hooks (see Hooks).
-
-## Using `dip_github_webhook.php`
-
-1. Create a dip project for GitHub hosted git repository (see Using `dip`).
-2. Copy `dip_github_webhook.php` under your document root, edit it, and adjust
-   the attributes shown below.
-    <?php
-    class Dip_GitHub_WebHook {
-        private $GitHub_WebHook_SecretKey = 'secret key';
-        private $PathToDipCommand = '/path/to/dip';
-        private $PathToDipProject = '/path/to/dip/project';
-        ...
-3. Use GitHub to create a webhook for your porject, giving it the secret key and
-   the URL to `dip_github_webhook.php`.
-
-Now everytime anything is pushed to your GitHub project, your dip project will
-be updated. You'll probably want dip to run some additional command after it
-updates a branch. See Hooks for how to customize dip's update behavior.
-
-### Debugging
-
-Check your webservers error logs for problems (or wherever PHP errors are
-logged).
-
-## Hooks
-
-When you run `dip update`, three operations are performed:
-
-1. delete - Deletes each local branch that no longer exists in origin.
-2. pull - Pull changes from origin into each local branch.
-3. clone - Clone each branch in origin that is not represented locally.
 
 Each operation has a corresponding subdirectory in .dip/hooks:
 
@@ -81,15 +60,11 @@ Each operation has a corresponding subdirectory in .dip/hooks:
 * .dip/hooks/pull/
 
 All the executable scripts (called hooks) in an operation's directory is ran for
-each branch that needs that operation performed. They are ran in lexicographical
-order.  By default, there is only one such script, `4_main.bash`. This script is
-the one that actually performs the operation.
-
-This framework makes it easy to customize each operation. To update an
-operation, simply add an executable script to that operation's hooks directory.
-The order that your hook will be executed is determined by its name.
-
-Here are some other important facts about hooks:
+each branch that needs that operation performed.  By default, there is only one
+such script, e.g., `4_clone.bash`. This script is the one that actually performs
+the operation. To extend an operation's behavior, simply add an executable
+script to that operation's hooks directory. Here are some other important facts
+about hooks:
 
 * Each hook in an operation directory is ran in lexicographical order to perform
   the operation.
