@@ -1,8 +1,11 @@
 <?php
+error_reporting(E_ALL);
+
+
 class Dip_GitHub_WebHook {
-    private $GitHub_WebHook_SecretKey = 'your secret key here';
+    private $GitHub_WebHook_SecretKey = '';
     private $PathToDipCommand = '/path/to/dip';
-    private $PathToDipProject = '/path/to/dip/project';
+    private $PathToDipProject = '/path/to/project';
     private $WebHook;
 
     public function __construct() {
@@ -29,8 +32,8 @@ class Dip_GitHub_WebHook {
         http_response_code(200);
         header('Connection: close');
         header('Content-Length: '.ob_get_length());
+        echo('Thanks!');
         ob_end_flush();
-        ob_flush();
         flush();
     }
 
@@ -46,7 +49,7 @@ class Dip_GitHub_WebHook {
     }
 
     public function ProcessEvent() {
-        $EventTypeHandler = 'Handle' . ucfirst($this->GetEventType());
+        $EventTypeHandler = 'Handle' . ucfirst($this->WebHook->GetEventType());
         $this->$EventTypeHandler();
     }
 
@@ -62,8 +65,15 @@ class Dip_GitHub_WebHook {
         $this->RunDip();
     }
 
+    public function HandlePing() {
+        $this->RunDip();
+    }
+
     private function RunDip() {
-        exec($this->PathToDipCommand.' update '.$this->PathToDipProject);
+        exec($this->PathToDipCommand.' update '.$this->PathToDipProject.' 2>&1', $out, $return);
+        if ($return !== 0) {
+            error_log(implode("\n", $out));
+        }
     }
 }
 
