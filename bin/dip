@@ -42,6 +42,21 @@ run_init_command() {
     script_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
     skel="$script_dir/../skeleton"
     cp -R "$skel" "$path"
+
+    if command_exists sha256sum ; then
+        SHA256SUM=sha256sum
+    elif command_exists shasum ; then
+        SHASUM="shasum -a 256"
+    fi
+    key=$(date +%s | $SHA256SUM | base64 | head -c 32 ; echo)
+    sed -i -E 's/SECRET_KEY/'"$key"'/' "$path/webhook.php"
+
+    path_to_git="$(dirname "$(which git)")"
+    path_to_dip="$script_dir"
+
+    sed -i -E 's|PATH_TO_GIT|'"$path_to_git"'|' "$path/webhook.php"
+    sed -i -E 's|PATH_TO_DIP|'"$path_to_dip"'|' "$path/webhook.php"
+
     git clone --bare "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
 }
 
