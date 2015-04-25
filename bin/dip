@@ -39,7 +39,7 @@ run_init_command() {
         exit 1
     fi
 
-    script_dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+    script_dir=$(get_script_directory)
     skel="$script_dir/../skeleton"
     cp -R "$skel" "$path"
 
@@ -58,6 +58,20 @@ run_init_command() {
     sed -i -E 's|PATH_TO_DIP|'"$path_to_dip"'|' "$path/webhook.php"
 
     git clone --mirror "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
+}
+
+get_script_directory() {
+    // Author: Dave Dopson
+    // License: CC-BY-SA
+    // Source: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+    SOURCE="${BASH_SOURCE[0]}"
+    while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+        DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+        SOURCE="$(readlink "$SOURCE")"
+        [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+    done
+    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+    echo "$DIR"
 }
 
 

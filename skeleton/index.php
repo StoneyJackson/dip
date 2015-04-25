@@ -1,12 +1,18 @@
 <?php
-echo "<ul>\n";
-foreach (scandir(__DIR__) as $file) {
-    if (is_dir(__DIR__.DIRECTORY_SEPARATOR.$file)
-        and $file != '.'
-        and $file != '..'
-        and $file != '.dip')
-    {
-        echo "<li><a href=\"$file\">$file</a></li>\n";
+$local_mirror = implode(DIRECTORY_SEPARATOR, array(
+    __DIR__,
+    '.dip',
+    'local.git'
+));
+exec('git --git-dir="'.$local_mirror.'" branch 2>&1', $out, $exit);
+if ($exit !== 0) {
+    error_log($out);
+    exit(1);
+}
+foreach ($out as $line) {
+    if (preg_match('/^\s*\*\s*(\S+)/', $line, $matches)) {
+        $branch = $matches[1];
+        header("Location: $branch");
+        exit(0);
     }
 }
-echo "</ul>\n";
