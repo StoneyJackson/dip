@@ -61,9 +61,9 @@ run_init_command() {
 }
 
 get_script_directory() {
-    // Author: Dave Dopson
-    // License: CC-BY-SA
-    // Source: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+    # Author: Dave Dopson
+    # License: CC-BY-SA
+    # Source: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
     SOURCE="${BASH_SOURCE[0]}"
     while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
         DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
