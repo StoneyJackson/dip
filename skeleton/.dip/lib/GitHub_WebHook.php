@@ -25,7 +25,7 @@
 				throw new Exception( 'Missing event header.' );
 			}
 
-			if ( preg_match( '/^[^a-z_]$/', $_SERVER[ $this->GetEventHeaderName() ] ) )
+			if ( !preg_match( '/^[^a-z_]+$/', $_SERVER[ $this->GetEventHeaderName() ] ) )
 			{
 				throw new Exception( 'Invalid event header.' );
 			}
