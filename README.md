@@ -1,40 +1,48 @@
 # dip
 
-Continuous deployment of all branches of a GitHub hosted repository.
+Continuously deploys all branches from a GitHub repository.
+
+
 
 ## License
 
 * Copyright 2015, Stoney Jackson &lt;dr.stoney@gmail.com>
 * License: GPLv3
 
+
+
 ## Requirements
 
+* GitHub
 * Bash
 * Git 1.10+
-* GitHub
 * PHP
 
-## Installing `dip`
 
-Clone this repository and add its `bin` directory to your path. Alternatively,
-always supply a relative or absolute path when calling `dip`.
 
-## Setup a dip project
+## Installing dip
 
-From the terminal on your webserver, create a dip project under sumwhere under
-your webserver's document root.
+On your deployment server:
+
+1. Clone this repository outside the document root.
+2. Add dip/bin to your system path.
+
+
+
+## Setup a project for continuous deployment
+
+On your deployment server:
+
+1. Create a dip project under the document root.
 
     $ dip init https://github.com/your/project.git path/to/project
-    $ cd path/to/project
-    $ vim webhook.php       # adjust settings
 
-On GitHub, add a webhook to your GitHub repository.
+2. Configure webhook.php
 
-1. Go to Settings -> WebHooks & Services -> Add webhook
-2. In "Payload URL" enter URL to webhook.php.
-3. For "Secret" enter the secret you set in webhook.php.
-4. Select "Let me select individual events" and select *push*, *create*, and
-   *delete*.
+    $ vim path/to/project/webhook.php
+
+In your GitHub repository, add a webhook that points to webhook.php and uses the
+secret key in webhook.php.
 
 After you add the webhook, GitHub will ping webhook.php on your server. If all
 goes well, all of your branches will be cloned into subdirectories of your dip
