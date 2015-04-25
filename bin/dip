@@ -57,7 +57,7 @@ run_init_command() {
     sed -i -E 's|PATH_TO_GIT|'"$path_to_git"'|' "$path/webhook.php"
     sed -i -E 's|PATH_TO_DIP|'"$path_to_dip"'|' "$path/webhook.php"
 
-    git clone --bare "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
+    git clone --mirror "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
 }
 
 
@@ -72,7 +72,7 @@ run_update_command() {
         print_usage_message
         exit 1
     fi
-    git --git-dir="$path/.dip/local.git" fetch
+    git --git-dir="$path/.dip/local.git" remote update
     for_each_branch_run_operations delete pull clone
 }
 
