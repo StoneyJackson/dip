@@ -52,7 +52,7 @@ run_init_command() {
     sed -i -E 's/SECRET_KEY/'"$key"'/' "$path/webhook.php"
 
     path_to_git="$(dirname "$(which git)")"
-    path_to_dip="$script_dir"
+    path_to_dip="$(cd "$script_dir/.." ; pwd)"
 
     sed -i -E 's|PATH_TO_GIT|'"$path_to_git"'|' "$path/webhook.php"
     sed -i -E 's|PATH_TO_DIP|'"$path_to_dip"'|' "$path/webhook.php"

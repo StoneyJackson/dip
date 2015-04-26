@@ -46,10 +46,6 @@ class DipWebHook {
     }
 
     public function ValidateRequest() {
-        if (!$this->WebHook->ValidateIPAddress()) {
-            throw new Exception(
-                'Invalid IP Address: request not sent from GitHub.');
-        }
         if (!$this->WebHook->ValidateHubSignature($this->SecretKey)) {
             throw new Exception(
                 'Invalid Hub Signature: request not sent from GitHub or keys do not match.');

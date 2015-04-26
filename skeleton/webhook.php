@@ -3,7 +3,7 @@
 # License: GPLv3
 
 
-require('.dip/lib/DipWebHook.php');
+require('PATH_TO_DIP/lib/DipWebHook.php');
 $webhook = new DipWebHook(array(
 
     // Give this secret key to GitHub when you create the webhook.
@@ -19,7 +19,7 @@ $webhook = new DipWebHook(array(
         #'PATH_TO_GIT',
 
         // Uncomment to include the detected path to dip.
-        #'PATH_TO_DIP',
+        #'PATH_TO_DIP/bin',
 
     ),
 
