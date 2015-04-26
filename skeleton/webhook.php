@@ -23,5 +23,9 @@ $webhook = new DipWebHook(array(
 
     ),
 
+    // Path to the dip project. If this webhook.php is in the root of the 
+    // project, you can leave this alone.
+    'project-path' => __DIR__,
+
 ));
 $webhook->ProcessRequest();

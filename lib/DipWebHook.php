@@ -16,7 +16,7 @@ class DipWebHook {
     public function __construct($settings) {
         $this->SecretKey = $settings['secret'];
         $this->PathsToPrepend = $settings['paths'];
-        $this->PathToDipProject = dirname(dirname(__DIR__));
+        $this->PathToDipProject = $settings['project-path'];
         $this->WebHook = new GitHub_WebHook();
     }
 
