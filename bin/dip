@@ -1,164 +1,65 @@
 #!/bin/bash
-# Copyright (c) 2015, Stoney Jackson <dr.stoney@gmail.com>
-# License: GPLv3
+set -e
 
 
 main() {
-    cmd="$1"
-    shift
-    if command_exists "run_${cmd}_command" ; then
-        "run_${cmd}_command" "$@"
-    else
-        echo "Unknown command $cmd"
-        print_usage_message
-        exit 1
-    fi
+    set_environment
+    parse_commandline "$@"
+    run_subcommand "$@"
 }
 
 
-print_usage_message() {
-    echo "usage:"
-    echo "  $(basename "$0") init REPO [PATH]"
-    echo "  $(basename "$0") update [PATH]"
+set_environment() {
+    DIP_SCRIPT="$( get_script )"
+    export DIP_HOME="$( dirname "$( dirname "$DIP_SCRIPT" )" )"
+    source "$DIP_HOME/lib/util.bash"
 }
 
 
-run_init_command() {
-    url="$1"
-    if [ -z "$url" ] ; then
-        print_usage_message
-        exit 1
-    fi
-    path="${2%/}"
-    if [ -z "$path" ] ; then
-        path="$(pwd)/$(basename "$url" .git)"
-    fi
-    if [ -d "$path/.dip" ] ; then
-        echo "Target is already a dip: $path"
-        print_usage_message
-        exit 1
-    fi
-
-    script_dir=$(get_script_directory)
-    skel="$script_dir/../skeleton"
-    cp -R "$skel" "$path"
-
-    if command_exists sha256sum ; then
-        SHA256SUM=sha256sum
-    elif command_exists shasum ; then
-        SHASUM="shasum -a 256"
-    fi
-    key=$(date +%s | $SHA256SUM | base64 | head -c 32 ; echo)
-    sed -i -E 's/SECRET_KEY/'"$key"'/' "$path/webhook.php"
-
-    path_to_git="$(dirname "$(which git)")"
-    path_to_dip="$(cd "$script_dir/.." ; pwd)"
-
-    sed -i -E 's|PATH_TO_GIT|'"$path_to_git"'|' "$path/webhook.php"
-    sed -i -E 's|PATH_TO_DIP|'"$path_to_dip"'|' "$path/webhook.php"
-
-    git clone --mirror "$url" "$path/.dip/local.git" || rm -rf "$path/.dip"
-}
-
-get_script_directory() {
+get_script() {
     # Author: Dave Dopson
     # License: CC-BY-SA
-    # Source: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-    SOURCE="${BASH_SOURCE[0]}"
-    while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
-        DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-        SOURCE="$(readlink "$SOURCE")"
-        [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+    # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+    local src="${BASH_SOURCE[0]}"
+    local dir
+    
+    # resolve $SOURCE until the file is no longer a symlink
+    while [ -h "$src" ]; do
+        dir="$( cd -P "$( dirname "$src" )" && pwd )"
+        src="$(readlink "$src")"
+        
+        # if $SOURCE was a relative symlink, we need to resolve it relative to
+        # the path where the symlink file was located
+        [[ $src != /* ]] && src="$dir/$src"
     done
-    DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
-    echo "$DIR"
+    dir="$( cd -P "$( dirname "$src" )" && pwd )"
+    echo "$dir/$( basename "$0" )"
 }
 
 
-run_update_command() {
-    path="${1%/}"
-    if [ -z "$path" ] ; then
-        path="$(pwd)"
-    fi
-    path="$(cd "$path" && pwd)"
-    if [ ! -d "$path/.dip" ] ; then
-        echo "Not in a dip."
-        print_usage_message
-        exit 1
-    fi
-    git --git-dir="$path/.dip/local.git" remote update
-    for_each_branch_run_operations delete pull clone
-}
-
-
-for_each_branch_run_operations() {
-    for operation in "$@"; do
-        for branch in $(branches_to_$operation); do
-            run_hooks_for_operation_on_branch $operation "$branch"
-        done
+parse_commandline() {
+    DIP_OPTIONS=()
+    while [ -n "$1" ] && ! is_subcommand "$1" ; do
+        DIP_OPTIONS+=("$1")
+        shift
     done
 }
 
 
-run_hooks_for_operation_on_branch() {
-    operation="$1"
-    branch="$2"
-    for hook in "$path/.dip/hooks/$1/"* ; do
-        if [ -x "$hook" ] ; then
-            (
-                cd "$path"
-                if [ -x "$hook" ] ; then
-                    "$hook" "$branch" || return 1
-                fi
-            )
-        fi
-    done
+is_subcommand() {
+    is_command "$( to_subcommand  "$1" )"
 }
 
 
-branches_to_clone() {
-    create_branch_files
-    comm -2 -3 "$path/.dip/tmp/branches" "$path/.dip/tmp/branch_repos"
+to_subcommand() {
+    echo "$( basename "$DIP_SCRIPT" )-$1"
 }
 
 
-branches_to_delete() {
-    create_branch_files
-    comm -1 -3 "$path/.dip/tmp/branches" "$path/.dip/tmp/branch_repos"
-}
-
-
-branches_to_pull() {
-    create_branch_files
-    comm -1 -2 "$path/.dip/tmp/branches" "$path/.dip/tmp/branch_repos"
-}
-
-
-create_branch_files() {
-    if [ -z "$BRANCH_FILES_CREATED" ] ; then
-        BRANCH_FILES_CREATED="true"
-        branches > "$path/.dip/tmp/branches"
-        branch_repos > "$path/.dip/tmp/branch_repos"
-    fi
-}
-
-
-branches() {
-    git --git-dir="$path/.dip/local.git" branch | tr '*' ' ' | sed 's/ //g' | sort
-}
-
-
-branch_repos() {
-    (for i in "$path"/* ; do
-        if [ -d "$i" ] ; then
-            echo "$i" | sed 's|.*/||'
-        fi
-    done) | sort
-}
-
-
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
+run_subcommand() {
+    local cmd="$( to_subcommand "$1" )"
+    shift
+    "$cmd" "$@"
 }
 
 

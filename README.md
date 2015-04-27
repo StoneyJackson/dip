@@ -35,7 +35,7 @@ On your deployment server:
 
 1. Create a dip project under the document root.
 
-    $ dip init https://github.com/your/project.git path/to/project
+    $ dip create path/to/project https://github.com/your/project.git
 
 2. Configure webhook.php
 

@@ -1,0 +1,92 @@
+#!/bin/bash
+set -e
+
+
+main() {
+    parse_commandline "$@"
+    update_mirror
+    update_branches
+}
+
+
+parse_commandline() {
+    DIP_PROJ="$( realpath "$1" )"
+}
+
+
+update_mirror() {
+    git --git-dir="$DIP_PROJ/.dip/mirror.git" remote update
+}
+
+
+update_branches() {
+    for operation in delete pull clone; do
+        for branch in $(branches_to_$operation); do
+            run_hooks $operation "$branch"
+        done
+    done
+}
+
+
+run_hooks() {
+    operation="$1"
+    branch="$2"
+    (
+        IFS="$(printf '\n\t')"
+        for hook in "$DIP_PROJ/.dip/hooks/$1/"* ; do
+            if [ -x "$hook" ] ; then
+            (
+                cd "$DIP_PROJ"
+                if [ -x "$hook" ] ; then
+                    "$hook" "$branch" || return 1
+                fi
+            )
+            fi
+        done
+    )
+}
+
+
+branches_to_clone() {
+    comm_branches -23
+}
+
+
+branches_to_delete() {
+    comm_branches -13
+}
+
+
+branches_to_pull() {
+    comm_branches -12
+}
+
+
+comm_branches() {
+    comm "$1" <(branches_in_mirror) <(branches_in_project)
+}
+
+
+branches_in_mirror() {
+    git --git-dir="$DIP_PROJ/.dip/mirror.git" branch | tr '*' ' ' | sed 's/ //g' | sort
+}
+
+
+branches_in_project() {
+    (
+        IFS="$(printf '\t\n')"
+        for i in "$DIP_PROJ"/* ; do
+            if [ -d "$i" ] ; then
+                echo "$i" | sed 's|.*/||'
+            fi
+        done
+    ) | sort
+}
+
+
+command_exists() {
+    command -v "$1" >/dev/null 2>&1
+}
+
+
+main "$@"

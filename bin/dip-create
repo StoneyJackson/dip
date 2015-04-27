@@ -1,0 +1,43 @@
+#!/bin/bash
+set -e
+source "$DIP_HOME/lib/util.bash"
+
+
+main() {
+    parse_commandline "$@"
+    create_project
+    git clone --mirror "$DIP_REPO" "$DIP_PROJ/.dip/mirror.git"
+}
+
+
+parse_commandline() {
+    DIP_PROJ="$( realpath "$1" )"
+    DIP_REPO="$2"
+}
+
+
+create_project() {
+    cp -R "$DIP_HOME/skeleton" "$DIP_PROJ"
+    webhook="$DIP_PROJ/webhook.php"
+    sed -i '' -E 's|DIP_HOME|'"$DIP_HOME"'|' "$webhook"
+    sed -i '' -E 's|DIP_PROJ|'"$DIP_PROJ"'|' "$webhook"
+    sed -i '' -E 's|GIT_PATH|'"$( dirname "$( which git )" )"'|' "$webhook"
+    sed -i '' -E 's|SECRET_KEY|'"$( generate_key )"'|' "$webhook"
+}
+
+
+generate_key() {
+    date +%s | sha256 | base64 | head -c 32 ; echo
+}
+
+
+sha256() {
+    if is_command sha256sum ; then
+        sha256sum "$@"
+    else
+        shasum -a 256 "$@"
+    fi
+}
+
+
+main "$@"
