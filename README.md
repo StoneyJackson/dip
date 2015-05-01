@@ -28,6 +28,12 @@ On your deployment server:
 2. Add dip/bin to your system path.
 
 
+Optionally, if you don't have realpath, build it as follows:
+
+```
+$ make
+```
+
 
 ## Setup a project for continuous deployment
 
