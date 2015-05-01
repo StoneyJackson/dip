@@ -11,6 +11,9 @@ main() {
 
 
 parse_commandline() {
+    if [ ! -e "$1" ] ; then
+        mkdir "$1"
+    fi
     DIP_PROJ="$( realpath "$1" )"
     DIP_REPO="$2"
 }
