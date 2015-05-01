@@ -11,21 +11,19 @@ main() {
 
 
 parse_commandline() {
-    if [ ! -e "$1" ] ; then
-        mkdir "$1"
-    fi
-    DIP_PROJ="$( realpath "$1" )"
+    DIP_PROJ="$1"
     DIP_REPO="$2"
 }
 
 
 create_project() {
     cp -R "$DIP_HOME/skeleton" "$DIP_PROJ"
+    DIP_PROJ="$( realpath "$DIP_PROJ" )"
     webhook="$DIP_PROJ/webhook.php"
-    sed -i '' -E 's|DIP_HOME|'"$DIP_HOME"'|' "$webhook"
-    sed -i '' -E 's|DIP_PROJ|'"$DIP_PROJ"'|' "$webhook"
-    sed -i '' -E 's|GIT_PATH|'"$( dirname "$( which git )" )"'|' "$webhook"
-    sed -i '' -E 's|SECRET_KEY|'"$( generate_key )"'|' "$webhook"
+    sed -i'' -e 's|DIP_HOME|'"$DIP_HOME"'|' "$webhook"
+    sed -i'' -e 's|DIP_PROJ|'"$DIP_PROJ"'|' "$webhook"
+    sed -i'' -e 's|GIT_PATH|'"$( dirname "$( which git )" )"'|' "$webhook"
+    sed -i'' -e 's|SECRET_KEY|'"$( generate_key )"'|' "$webhook"
 }
 
 

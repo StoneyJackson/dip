@@ -6,7 +6,7 @@
 $local_mirror = implode(DIRECTORY_SEPARATOR, array(
     __DIR__,
     '.dip',
-    'local.git'
+    'mirror.git'
 ));
 exec('git --git-dir="'.$local_mirror.'" branch 2>&1', $out, $exit);
 if ($exit !== 0) {
